@@ -1885,19 +1885,36 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 				console.error(file, m); 
 			}, 
 			"finished" : function(data) {
+				//TODO move the dataloading to the update event 
 				console.log("loaded"); 
-				var dict = mapTagToKey(data, gl); 
-				var models = [];
+				var dict = mapTagToKey(data, gl); 				
+				var gameobjects = [];
 				for(var i = 0; i != map.objects.models.length; i++) {
-					var model = map.objects.models[i]; 
+					var entity = map.objects.models[i]; 
+					var name = entity.name; 
+					var objdata = dict[entity.model];
+					var texture = dict[entity.texture]; 
+					var shader  = dict[entity.shader]; 
 
-					
+					gameobjects.push( createPropperGameObject({
+						"name"    : entity.name, 
+						"objdata" : dict[entity.model],
+						"texture" : dict[entity.texture], 
+						"shader"  : dict[entity.shader]  
+					}));
 				}
 			}
 		});
 	}
 
-	function mapTagToKey(data, gl) {
+	function createPropperGameObject(info) {
+		var vtnBuffer = gl.createBuffer(); 
+		gl.bindBuffer(gl.ARRAY_BUFFER, vtnBuffer); 
+		gl.bufferData(gl.ARRAY_BUFFER, info.objdata.rawData, gl.STATIC_DRAW);
+		//TODO 
+	}
+
+	function mapTagToKey(data) {
 		var dict = {};
 		var d; 
 		for(var k in data) {

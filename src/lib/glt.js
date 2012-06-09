@@ -1,4 +1,4 @@
 if(!GLT_JS) {
-//= ../../../gltoolbox.js/glt.js
+//= ../../gltoolbox.js/glt.js
 }
 var GLT_JS = true; 

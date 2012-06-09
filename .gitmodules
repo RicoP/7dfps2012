@@ -1,3 +1,6 @@
 [submodule "gltoolbox.js"]
 	path = gltoolbox.js
 	url = git@github.com:RicoP/gltoolbox.js.git
+[submodule "gl-matrix"]
+	path = gl-matrix
+	url = git://github.com/toji/gl-matrix.git

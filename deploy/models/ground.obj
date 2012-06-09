@@ -1,0 +1,15 @@
+# Blender v2.63 (sub 0) OBJ File: 'ground.blend'
+# www.blender.org
+mtllib ground.mtl
+o Plane
+v 64.000000 0.000000 64.000000
+v -64.000000 0.000000 64.000000
+v 64.000000 0.000000 -64.000000
+v -64.000000 0.000000 -64.000000
+vt 0.000000 0.000000
+vt 1.000000 0.000000
+vt 1.000000 1.000000
+vt 0.000000 1.000000
+usemtl ground_groundtex
+s off
+f 2/1 1/2 3/3 4/4

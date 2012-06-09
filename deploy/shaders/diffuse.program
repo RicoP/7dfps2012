@@ -1,0 +1,30 @@
+#ifdef GL_ES
+precision highp float;
+#endif
+
+varying vec2 vTextureuv; 
+varying vec4 vNormal; 
+
+uniform mat4 uModelview;
+uniform mat4 uProjection; 
+uniform sampler2D uTexture; 
+
+#ifdef VERTEX
+attribute vec4 aVertex;   
+attribute vec2 aTextureuv;   
+attribute vec4 aNormal;
+
+void main(void) {
+	vTextureuv = aTextureuv; 
+	vNormal = uProjection * uModelview * aNormal;
+	gl_Position = uProjection * uModelview * aVertex; 
+}
+#endif 
+
+
+
+#ifdef FRAGMENT 
+void main(void) {	
+	gl_FragColor = texture2D(uTexture, vTextureuv);
+}
+#endif

@@ -1,0 +1,40 @@
+{
+	"data" : [
+		{ "file" : "models/zombie.obj",       "tag" : "zombieobj" },
+		{ "file" : "models/zombietex.png",    "tag" : "zombietex" },
+		{ "file" : "models/wall.obj",         "tag" : "wallobj" },
+		{ "file" : "models/walltex.png",      "tag" : "walltex" },
+		{ "file" : "models/groundtex.png",    "tag" : "groundtex" },
+		//HACK: remove type please. 
+		{ "file" : "shaders/diffuse.program", "tag" : "diffuse", "type" : "shader" }
+	],
+
+	"width" : 8, 
+	"height" : 8, 
+
+	"objects" : {
+		"models" : [
+			{ "name" : "zombie", "model" : "zombieobj", "texture" : "zombietex", "shader" : "diffuse" },
+			{ "name" : "wall", "model" : "wallobj", "texture" : "walltex", "shader" : "diffuse" }
+		],
+
+		"ground" : { "texture" : "groundtex", "shader" : "diffuse" }
+	},
+
+	"mapping" : {
+		"z" : "zombie", 
+		"w" : "wall", 
+		"s" : "startpoint"
+	},
+
+	"map" : [
+		" z  z z ",
+		"        ",
+		"wwwwwwww",
+		"        ",
+		"        ",
+		"        ",
+		"      s ",
+		"        "
+	]
+}

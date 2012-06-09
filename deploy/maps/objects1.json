@@ -1,0 +1,28 @@
+{
+	"files" : {
+		"wallobj" : "models/wall.obj",	
+		"walltex" : "models/walltex.png",
+		"zombieobj" : "models/zombie.obj",	
+		"zombietex" : "models/zombietex.png"		
+	}
+
+	numbermapping : {
+		//0 means empty
+		//1 means ground which I render differently right now
+		"2" : "wall",
+		"3" : "zombie",
+		"4" : "start" //start is a speacial object
+                      //which indicates the starting 
+                      //position of the player. 
+	},
+	nameobjectmapping : {
+		"wall" : {
+			"model" : "wallobj",
+			"texture" : "walltex"
+		},
+		"zombie" : {
+			"model" : "zombieobj",
+			"texture" : "zombietex"
+		}
+	}
+}

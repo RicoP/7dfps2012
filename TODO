@@ -1,11 +1,8 @@
-(Theme: 
-	Hunting + Exploding heads)
-
 Day 1: 
-* Object Loading [ ]
-	* Textures Converting [ ]
-	* Shader Loading [ ] 
-* Object Display 
+* Object Loading [x]
+	* Textures Converting [x]
+	* Shader Loading [x] 
+* Object Display [x]
 
 Day 2: 
 

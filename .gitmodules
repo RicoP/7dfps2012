@@ -1,0 +1,3 @@
+[submodule "gltoolbox.js"]
+	path = gltoolbox.js
+	url = git@github.com:RicoP/gltoolbox.js.git

@@ -1520,7 +1520,7 @@ function createContext(canvas) {
 
 function createSafeContext(canvas) {
 	var gl = createContext(canvas); 
-	return gl.getSafeContext(); 
+	return WebGLDebugUtils.makeDebugContext(gl).getSafeContext(); 
 }
 
 GLT.createContext = createContext; 
@@ -1968,10 +1968,16 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); 
 		gl.bindTexture(gl.TEXTURE_2D, null); 
 
+
+
 		return {
 			"name"        : info.name,
 			"schema"      : info.objdata.schema, 
 			"numVertices" : info.objdata.numVertices,  
+			"voffset"     : info.objdata.voffset, 
+			"toffset"     : info.objdata.toffset, 
+			"noffset"     : info.objdata.noffset, 
+			"stride"      : info.objdata.stride, 
 			"buffer"      : vtnBuffer, 
 			"aVertex"     : aVertex, 
 			"aTextureuv"  : aTextureuv, 
@@ -5512,7 +5518,7 @@ var GL_MATRIX_JS = true;
 (function() {
 /////////////
 
-var gl = GLT.createContext(document.getElementsByTagName("canvas")[0]); 
+var gl = GLT.createSafeContext(document.getElementsByTagName("canvas")[0]); 
 
 var projection = mat4.perspective(75, 4/3, 0.1, 1000); 
 var cameraPos = vec3.create([0, 0, 0]); 
@@ -5557,7 +5563,7 @@ function setup(mapdata) {
 	gl.clearColor(0,0,0,1); 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
 
-	cameraPos = vec3.create([mapdata.startpoint.x, 1.8, mapdata.startpoint.y]); 
+	cameraPos = vec3.create([mapdata.startpoint.x, 2.0, mapdata.startpoint.y]); 
 	recalcCamera(); 
 
 	for(var y = 0; y != mapdata.grid.length; y++) {
@@ -5592,6 +5598,24 @@ function draw(time) {
 		moved = true; 
 	}
 
+	if(GLT.keys.isDown(GLT.keys.codes.a)) {
+		cameraPos[0] -= 0.1; 
+		moved = true; 
+	}
+	if(GLT.keys.isDown(GLT.keys.codes.d)) {
+		cameraPos[0] += 0.1; 
+		moved = true; 
+	}
+
+	if(GLT.keys.isDown(GLT.keys.codes.q)) {
+		cameraPos[1] += 0.1; 
+		moved = true; 
+	}
+	if(GLT.keys.isDown(GLT.keys.codes.e)) {
+		cameraPos[1] -= 0.1; 
+		moved = true; 
+	}
+
 	if(moved) {
 		recalcCamera(); 
 	}
@@ -5600,15 +5624,22 @@ function draw(time) {
 	var indxProjection = gl.getUniformLocation(program, "uProjection");
 	var indxTexture    = gl.getUniformLocation(program, "uTexture"); 
 
-	var modelview = mat4.identity(); 
-
 	for(var i = 0; i != entities.length; i++) { 
+		//if(i !== 7) continue; 
+
 		var entity = entities[i]; 
-		mat4.identity(modelview); 
+		var modelview = mat4.identity(); 
+		mat4.multiply(modelview, camera); 
 		mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
 
-		gl.bindBuffer(gl.BIND_BUFFER, entity.data.buffer); 
+		gl.bindBuffer(gl.ARRAY_BUFFER, entity.data.buffer); 
+
 		gl.bindTexture(gl.TEXTURE_2D, entity.data.texture);
+		gl.uniform1i(indxTexture, 0); 
+
+		gl.uniformMatrix4fv(indxProjection, false, projection); 
+		gl.uniformMatrix4fv(indxModelView, false, modelview); 
+
 
 		gl.vertexAttribPointer(entity.data.aVertex, 4, gl.FLOAT, false, entity.data.stride, entity.data.voffset); 
 		gl.enableVertexAttribArray(entity.data.aVertex); 
@@ -5622,12 +5653,7 @@ function draw(time) {
 			gl.vertexAttribPointer(entity.data.aNormal, 4, gl.FLOAT, false, entity.data.stride, entity.data.noffset); 
 			gl.enableVertexAttribArray(entity.data.aNormal); 
 		}
-
-		gl.uniform1i(indxTexture, 0); 
-
-		gl.uniformMatrix4fv(indxProjection, false, projection); 
-		gl.uniformMatrix4fv(indxModelView, false, modelview); 
-
+		
 		gl.drawArrays(gl.TRIANGLES, 0, entity.data.numVertices); 
 	}
 

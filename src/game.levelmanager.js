@@ -113,10 +113,16 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); 
 		gl.bindTexture(gl.TEXTURE_2D, null); 
 
+
+
 		return {
 			"name"        : info.name,
 			"schema"      : info.objdata.schema, 
 			"numVertices" : info.objdata.numVertices,  
+			"voffset"     : info.objdata.voffset, 
+			"toffset"     : info.objdata.toffset, 
+			"noffset"     : info.objdata.noffset, 
+			"stride"      : info.objdata.stride, 
 			"buffer"      : vtnBuffer, 
 			"aVertex"     : aVertex, 
 			"aTextureuv"  : aTextureuv, 

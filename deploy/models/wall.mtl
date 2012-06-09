@@ -8,6 +8,6 @@ Ks 0.500000 0.500000 0.500000
 Ni 1.000000
 d 1.000000
 illum 0
-map_Kd walltex.png
+map_Kd /home/rico/local/glttestground/maploader/models/walltex.png
 
 

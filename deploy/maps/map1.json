@@ -1,11 +1,11 @@
 {
-	"data" : [
-		{ "file" : "models/zombie.obj",       "tag" : "zombieobj" },
-		{ "file" : "models/zombietex.png",    "tag" : "zombietex" },
-		{ "file" : "models/wall.obj",         "tag" : "wallobj" },
-		{ "file" : "models/walltex.png",      "tag" : "walltex" },
-		{ "file" : "models/groundtex.png",    "tag" : "groundtex" },
-		{ "file" : "programs/diffuse.program", "tag" : "diffuse", "type" : "program" }
+	"files" : [
+		{ "file" : "models/zombie.obj",        "name" : "zombieobj" },
+		{ "file" : "models/zombietex.png",     "name" : "zombietex" },
+		{ "file" : "models/wall.obj",          "name" : "wallobj" },
+		{ "file" : "models/walltex.png",       "name" : "walltex" },
+		{ "file" : "models/groundtex.png",     "name" : "groundtex" },
+		{ "file" : "programs/diffuse.program", "name" : "diffuse", "type" : "program" }
 	],
 
 	"width" : 8, 
@@ -22,13 +22,7 @@
 		"ground" : { "texture" : "groundtex" }
 	},
 
-	"mapping" : {
-		"z" : "zombie", 
-		"w" : "wall", 
-		"s" : "startpoint"
-	},
-
-	"map" : [
+	"objectmap" : [
 		" z  z z ",
 		"        ",
 		"wwwwwwww",
@@ -37,5 +31,11 @@
 		"        ",
 		"      s ",
 		"        "
-	]
+	],
+
+	"mapping" : {
+		"z" : "zombie", 
+		"w" : "wall", 
+		"s" : "startpoint"
+	}
 }

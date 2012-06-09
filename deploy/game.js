@@ -5590,11 +5590,11 @@ function draw(time) {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
 
 	if(GLT.keys.isDown(GLT.keys.codes.w)) {
-		cameraPos[2] += 0.1; 
+		cameraPos[2] -= 0.1; 
 		moved = true; 
 	}
 	if(GLT.keys.isDown(GLT.keys.codes.s)) {
-		cameraPos[2] -= 0.1; 
+		cameraPos[2] += 0.1; 
 		moved = true; 
 	}
 
@@ -5625,12 +5625,15 @@ function draw(time) {
 	var indxTexture    = gl.getUniformLocation(program, "uTexture"); 
 
 	for(var i = 0; i != entities.length; i++) { 
-		//if(i !== 7) continue; 
-
 		var entity = entities[i]; 
 		var modelview = mat4.identity(); 
 		mat4.multiply(modelview, camera); 
+
 		mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
+
+		if(entity.data.name === "zombie") {
+			mat4.rotateZ(modelview, Math.sin(Date.now() / 1000) / 10  );
+		}
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, entity.data.buffer); 
 

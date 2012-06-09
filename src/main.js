@@ -116,7 +116,12 @@ function draw(time) {
 		var entity = entities[i]; 
 		var modelview = mat4.identity(); 
 		mat4.multiply(modelview, camera); 
+
 		mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
+
+		if(entity.data.name === "zombie") {
+			mat4.rotateZ(modelview, Math.sin(Date.now() / 1000) / 10  );
+		}
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, entity.data.buffer); 
 

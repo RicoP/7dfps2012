@@ -5,20 +5,21 @@
 		{ "file" : "models/wall.obj",         "tag" : "wallobj" },
 		{ "file" : "models/walltex.png",      "tag" : "walltex" },
 		{ "file" : "models/groundtex.png",    "tag" : "groundtex" },
-		//HACK: remove type please. 
-		{ "file" : "shaders/diffuse.program", "tag" : "diffuse", "type" : "shader" }
+		{ "file" : "programs/diffuse.program", "tag" : "diffuse", "type" : "program" }
 	],
 
 	"width" : 8, 
 	"height" : 8, 
 
+	"programname" : "diffuse", 
+
 	"objects" : {
 		"models" : [
-			{ "name" : "zombie", "model" : "zombieobj", "texture" : "zombietex", "shader" : "diffuse" },
-			{ "name" : "wall", "model" : "wallobj", "texture" : "walltex", "shader" : "diffuse" }
+			{ "name" : "zombie", "model" : "zombieobj", "texture" : "zombietex" },
+			{ "name" : "wall", "model" : "wallobj", "texture" : "walltex" }
 		],
 
-		"ground" : { "texture" : "groundtex", "shader" : "diffuse" }
+		"ground" : { "texture" : "groundtex" }
 	},
 
 	"mapping" : {

@@ -17,6 +17,8 @@ var camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir)
 
 var entities = []; 
 
+var program = null; 
+
 loadData("map1"); 
 
 function recalcCamera() {
@@ -38,7 +40,7 @@ function loadData(mapname) {
 		}, 
 		function(mapdata) {
 			setup(mapdata); 
-			//GLT.requestGameFrame(draw); 
+			GLT.requestGameFrame(draw); 
 		}
 	); 
 }
@@ -46,7 +48,7 @@ function loadData(mapname) {
 function setup(mapdata) {
 	gl.enable( gl.DEPTH_TEST ); 
 	gl.enable( gl.CULL_FACE ); 
-	gl.clearColor(0,0.5,0,1); 
+	gl.clearColor(0,0,0,1); 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
 
 	cameraPos = vec3.create([mapdata.startpoint.x, 1.8, mapdata.startpoint.y]); 
@@ -65,7 +67,8 @@ function setup(mapdata) {
 			}
 		}
 	}
-	
+
+	program = mapdata.program; 
 	gl.useProgram(mapdata.program); 
 }
 
@@ -84,22 +87,43 @@ function draw(time) {
 	}
 
 	if(moved) {
-		camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
+		recalcCamera(); 
 	}
 
 	var indxModelView  = gl.getUniformLocation(program, "uModelview") 
 	var indxProjection = gl.getUniformLocation(program, "uProjection");
 	var indxTexture    = gl.getUniformLocation(program, "uTexture"); 
 
-	modelview = mat4.identity(); 
-	
-	gl.bindTexture(gl.TEXTURE_2D, texture); 
-	gl.uniform1i(indxTexture, 0); 
+	var modelview = mat4.identity(); 
 
-	gl.uniformMatrix4fv(indxProjection, false, projection); 
-	gl.uniformMatrix4fv(indxModelView, false, modelview); 
+	for(var i = 0; i != entities.length; i++) { 
+		var entity = entities[i]; 
+		mat4.identity(modelview); 
+		mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
 
-	gl.drawArrays(gl.TRIANGLES, 0, entity.numVertices); 
+		gl.bindBuffer(gl.BIND_BUFFER, entity.data.buffer); 
+		gl.bindTexture(gl.TEXTURE_2D, entity.data.texture);
+
+		gl.vertexAttribPointer(entity.data.aVertex, 4, gl.FLOAT, false, entity.data.stride, entity.data.voffset); 
+		gl.enableVertexAttribArray(entity.data.aVertex); 
+
+		if(entity.data.schema & GLT.obj.SCHEMA_VT && entity.data.aTextureuv >= 0) {
+			gl.vertexAttribPointer(entity.data.aTextureuv, 2, gl.FLOAT, false, entity.data.stride, entity.data.toffset); 
+			gl.enableVertexAttribArray(entity.data.aTextureuv); 
+		}
+
+		if(entity.data.schema & GLT.obj.SCHEMA_VN && entity.data.aNormal >= 0) {
+			gl.vertexAttribPointer(entity.data.aNormal, 4, gl.FLOAT, false, entity.data.stride, entity.data.noffset); 
+			gl.enableVertexAttribArray(entity.data.aNormal); 
+		}
+
+		gl.uniform1i(indxTexture, 0); 
+
+		gl.uniformMatrix4fv(indxProjection, false, projection); 
+		gl.uniformMatrix4fv(indxModelView, false, modelview); 
+
+		gl.drawArrays(gl.TRIANGLES, 0, entity.data.numVertices); 
+	}
 
 	GLT.requestGameFrame(draw); 
 }

@@ -1891,25 +1891,25 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 			"finished" : function(filesWithNames) {
 				var files = mapNameToKey(filesWithNames, gl); 				
 
-				mainprogram = GLT.SHADER.compileProgram( gl, files[mapdata.programname] );
+				mainprogram = GLT.SHADER.compileProgram( gl, files[mapdata.programname].data );
 				aVertex     = gl.getAttribLocation(mainprogram, "aVertex"); 
 				aTextureuv  = gl.getAttribLocation(mainprogram, "aTextureuv"); 
 				aNormal     = gl.getAttribLocation(mainprogram, "aNormal"); 
 
-				var gameobjects = [];
+				var gameobjects = Object.create(null);
 				for(var i = 0; i != mapdata.objects.models.length; i++) {
 					var entity = mapdata.objects.models[i]; 
 					var name = entity.name; 
-					var objdata = files[entity.model];
-					var texture = files[entity.texture]; 
-					var program = files[entity.program]; 
+					var objdata = files[entity.model].data;
+					var texture = files[entity.texture].data; 
 
-					gameobjects.push( createPropperGameObject({
+					var go = createPropperGameObject({
 						"name"    : entity.name, 
-						"objdata" : files[entity.model],
-						"texture" : files[entity.texture], 
-						"program" : files[entity.program]  
-					}));
+						"objdata" : objdata,  
+						"texture" : texture 
+					}); 
+
+					gameobjects[go.name] = go; 
 				}
 
 				var map = getMapStructure(mapdata, gameobjects); 
@@ -1981,12 +1981,12 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 	}
 
 	function mapNameToKey(data) {
-		var dict = {};
+		var dict = Object.create(null);
 		var d; 
 		for(var k in data) {
 			d = data[k]; 
 			if(d.name) {
-				dict[d.name] = d.data;
+				dict[d.name] = d;
 			}
 		}
 		return dict; 
@@ -5521,7 +5521,13 @@ var cameraNormal = vec3.create([0,0,-1]);
 var cameraUp = vec3.create([0,1,0]); 
 var camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
 
+var entities = []; 
+
 loadData("map1"); 
+
+function recalcCamera() {
+	camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
+}
 
 function loadData(mapname) {
 	if(DEBUG) {
@@ -5548,6 +5554,23 @@ function setup(mapdata) {
 	gl.enable( gl.CULL_FACE ); 
 	gl.clearColor(0,0.5,0,1); 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+
+	cameraPos = vec3.create([mapdata.startpoint.x, 1.8, mapdata.startpoint.y]); 
+	recalcCamera(); 
+
+	for(var y = 0; y != mapdata.grid.length; y++) {
+		var row = mapdata.grid[y]; 
+		for(var x = 0; x != row.length; x++) {
+			var o = row[x]; 
+			if(o && o in mapdata.gameobjects) {
+				var gameobj = {
+					"data" : mapdata.gameobjects[o], 
+					"position" : { "x" : x, "y" : y }
+				};
+				entities.push(gameobj); 
+			}
+		}
+	}
 	
 	gl.useProgram(mapdata.program); 
 }

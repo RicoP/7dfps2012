@@ -36,25 +36,25 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 			"finished" : function(filesWithNames) {
 				var files = mapNameToKey(filesWithNames, gl); 				
 
-				mainprogram = GLT.SHADER.compileProgram( gl, files[mapdata.programname] );
+				mainprogram = GLT.SHADER.compileProgram( gl, files[mapdata.programname].data );
 				aVertex     = gl.getAttribLocation(mainprogram, "aVertex"); 
 				aTextureuv  = gl.getAttribLocation(mainprogram, "aTextureuv"); 
 				aNormal     = gl.getAttribLocation(mainprogram, "aNormal"); 
 
-				var gameobjects = [];
+				var gameobjects = Object.create(null);
 				for(var i = 0; i != mapdata.objects.models.length; i++) {
 					var entity = mapdata.objects.models[i]; 
 					var name = entity.name; 
-					var objdata = files[entity.model];
-					var texture = files[entity.texture]; 
-					var program = files[entity.program]; 
+					var objdata = files[entity.model].data;
+					var texture = files[entity.texture].data; 
 
-					gameobjects.push( createPropperGameObject({
+					var go = createPropperGameObject({
 						"name"    : entity.name, 
-						"objdata" : files[entity.model],
-						"texture" : files[entity.texture], 
-						"program" : files[entity.program]  
-					}));
+						"objdata" : objdata,  
+						"texture" : texture 
+					}); 
+
+					gameobjects[go.name] = go; 
 				}
 
 				var map = getMapStructure(mapdata, gameobjects); 
@@ -126,12 +126,12 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 	}
 
 	function mapNameToKey(data) {
-		var dict = {};
+		var dict = Object.create(null);
 		var d; 
 		for(var k in data) {
 			d = data[k]; 
 			if(d.name) {
-				dict[d.name] = d.data;
+				dict[d.name] = d;
 			}
 		}
 		return dict; 

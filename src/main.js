@@ -15,7 +15,13 @@ var cameraNormal = vec3.create([0,0,-1]);
 var cameraUp = vec3.create([0,1,0]); 
 var camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
 
+var entities = []; 
+
 loadData("map1"); 
+
+function recalcCamera() {
+	camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
+}
 
 function loadData(mapname) {
 	if(DEBUG) {
@@ -42,6 +48,23 @@ function setup(mapdata) {
 	gl.enable( gl.CULL_FACE ); 
 	gl.clearColor(0,0.5,0,1); 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+
+	cameraPos = vec3.create([mapdata.startpoint.x, 1.8, mapdata.startpoint.y]); 
+	recalcCamera(); 
+
+	for(var y = 0; y != mapdata.grid.length; y++) {
+		var row = mapdata.grid[y]; 
+		for(var x = 0; x != row.length; x++) {
+			var o = row[x]; 
+			if(o && o in mapdata.gameobjects) {
+				var gameobj = {
+					"data" : mapdata.gameobjects[o], 
+					"position" : { "x" : x, "y" : y }
+				};
+				entities.push(gameobj); 
+			}
+		}
+	}
 	
 	gl.useProgram(mapdata.program); 
 }

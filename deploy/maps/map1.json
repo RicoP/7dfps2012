@@ -35,7 +35,6 @@
 
 	"mapping" : {
 		"z" : "zombie", 
-		"w" : "wall", 
-		"s" : "startpoint"
+		"w" : "wall" 
 	}
 }

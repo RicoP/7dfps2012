@@ -1864,61 +1864,95 @@ if(!GAME_LEVELMANAGER_JS) {
 GAME.LEVELMANAGER = {}; 
 
 GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinished) {
-	var mappath = "maps/" + name + ".json"; 
+	var mapfilepath = "maps/" + name + ".json"; 
 	var mainprogram = null; 
 	var aVertex = -1; 
 	var aTextureuv = -1; 
 	var aNormal = -1; 
 
 	GLT.loadmanager.loadFiles({
-		"files" : [ mappath ], 
+		"files" : [ mapfilepath ], 
 		"error" : function (file, m) {
 			console.error(file, m); 
 		}, 
 		"finished" : function(files) {
-			var mapdata = files[mappath]; 
-			processLevel(mapdata, callbackprogress, function(mapdata) {
-				//TODO 
-			});  
+			var mapdata = files[mapfilepath]; 
+			processLevel(mapdata, callbackprogress, callbackfinished);  
 		}
 	}); 
 
-	function processLevel(map, onupdate, onfinished) {
+	function processLevel(mapdata, onupdate, onfinished) {
 		GLT.loadmanager.loadFiles({
-			"files" : map.data, 
+			"files" : mapdata.files, 
 			"update" : onupdate, 
 			"error" : function (file, m) {
 				console.error(file, m); 
 			}, 
-			"finished" : function(data) {
-				console.log("loaded"); 
-				var dict = mapTagToKey(data, gl); 				
+			"finished" : function(filesWithNames) {
+				var files = mapNameToKey(filesWithNames, gl); 				
 
-				mainprogram = dict[map.programname];
+				mainprogram = GLT.SHADER.compileProgram( gl, files[mapdata.programname] );
 				aVertex     = gl.getAttribLocation(mainprogram, "aVertex"); 
 				aTextureuv  = gl.getAttribLocation(mainprogram, "aTextureuv"); 
 				aNormal     = gl.getAttribLocation(mainprogram, "aNormal"); 
 
 				var gameobjects = [];
-				for(var i = 0; i != map.objects.models.length; i++) {
-					var entity = map.objects.models[i]; 
+				for(var i = 0; i != mapdata.objects.models.length; i++) {
+					var entity = mapdata.objects.models[i]; 
 					var name = entity.name; 
-					var objdata = dict[entity.model];
-					var texture = dict[entity.texture]; 
-					var program = dict[entity.program]; 
+					var objdata = files[entity.model];
+					var texture = files[entity.texture]; 
+					var program = files[entity.program]; 
 
 					gameobjects.push( createPropperGameObject({
 						"name"    : entity.name, 
-						"objdata" : dict[entity.model],
-						"texture" : dict[entity.texture], 
-						"program" : dict[entity.program]  
+						"objdata" : files[entity.model],
+						"texture" : files[entity.texture], 
+						"program" : files[entity.program]  
 					}));
 				}
 
-				var grid = [[]]; 
+				var map = getMapStructure(mapdata, gameobjects); 
 
+				onfinished({
+					"gameobjects" : gameobjects, 
+					"grid" : map.grid, 
+					"startpoint" : map.startpoint,
+					"program" : mainprogram 
+				});
 			}
 		});
+	}
+
+	function getMapStructure(mapdata, gameobjects) {
+		var grid = [[]]; 
+		var startpoint; 
+
+		for(var y = 0; y != mapdata.height; y++) {
+			grid[y] = []; 
+
+			for(var x = 0; x != mapdata.width; x++) {
+				var c = mapdata.objectmap[y][x]; 
+
+				if(c === " ") {
+					continue; 
+				}
+				else if(mapdata.mapping[c]) {
+					grid[y][x] = mapdata.mapping[c]; 
+				}
+				else if(c === "s") { 
+					startpoint = { "x" : x, "y" : y }; 
+				}
+				else {
+					grid[y][x] = null;  
+				}
+			}
+		}
+
+		return {
+			"grid" : grid, 
+			"startpoint" : startpoint
+		};
 	}
 
 	function createPropperGameObject(info) {
@@ -1935,28 +1969,24 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 		gl.bindTexture(gl.TEXTURE_2D, null); 
 
 		return {
-			"name" : info.name,
-			"schema" : info.objdata.schema, 
-			"buffer" : vtnBuffer, 
-			"aVertex" : aVertex, 
-			"aTextureuv" : aTextureuv, 
-			"aNormal" : aNormal, 
-			"texture" : texture
+			"name"        : info.name,
+			"schema"      : info.objdata.schema, 
+			"numVertices" : info.objdata.numVertices,  
+			"buffer"      : vtnBuffer, 
+			"aVertex"     : aVertex, 
+			"aTextureuv"  : aTextureuv, 
+			"aNormal"     : aNormal, 
+			"texture"     : texture
 		};
 	}
 
-	function mapTagToKey(data) {
+	function mapNameToKey(data) {
 		var dict = {};
 		var d; 
 		for(var k in data) {
 			d = data[k]; 
-			if(d.tag) {
-				if(d.type === "program") { 
-					dict[d.tag] = GLT.SHADER.compileProgram(gl, d.data); 
-				}
-				else { 
-					dict[d.tag] = d.data;
-				}
+			if(d.name) {
+				dict[d.name] = d.data;
 			}
 		}
 		return dict; 
@@ -5480,24 +5510,84 @@ var GL_MATRIX_JS = true;
 
 
 (function() {
+/////////////
+
 var gl = GLT.createContext(document.getElementsByTagName("canvas")[0]); 
 
-if(DEBUG) {
-	console.log("DEBUG Version"); 
-} else {
-	console.log("RELEASE Version"); 
+var projection = mat4.perspective(75, 4/3, 0.1, 1000); 
+var cameraPos = vec3.create([0, 0, 0]); 
+var cameraDir = vec3.create([0,0,0]); 
+var cameraNormal = vec3.create([0,0,-1]); 
+var cameraUp = vec3.create([0,1,0]); 
+var camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
+
+loadData("map1"); 
+
+function loadData(mapname) {
+	if(DEBUG) {
+		console.log("DEBUG Version"); 
+	} else {
+		console.log("RELEASE Version"); 
+	}
+
+	GAME.LEVELMANAGER.loadlevel(
+		mapname, 
+		gl, 
+		function(file, p) {
+			console.log(file, p); 
+		}, 
+		function(mapdata) {
+			setup(mapdata); 
+			//GLT.requestGameFrame(draw); 
+		}
+	); 
 }
 
-GAME.LEVELMANAGER.loadlevel(
-	"map1", 
-	gl, 
-	function(file, p) {
-		console.log(file, p); 
-	}, 
-	function(files) {
-		console.log("done", files); 
-	}
-); 
+function setup(mapdata) {
+	gl.enable( gl.DEPTH_TEST ); 
+	gl.enable( gl.CULL_FACE ); 
+	gl.clearColor(0,0.5,0,1); 
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+	
+	gl.useProgram(mapdata.program); 
+}
 
+function draw(time) {
+	var moved = false; 
+
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+
+	if(GLT.keys.isDown(GLT.keys.codes.w)) {
+		cameraPos[2] += 0.1; 
+		moved = true; 
+	}
+	if(GLT.keys.isDown(GLT.keys.codes.s)) {
+		cameraPos[2] -= 0.1; 
+		moved = true; 
+	}
+
+	if(moved) {
+		camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
+	}
+
+	var indxModelView  = gl.getUniformLocation(program, "uModelview") 
+	var indxProjection = gl.getUniformLocation(program, "uProjection");
+	var indxTexture    = gl.getUniformLocation(program, "uTexture"); 
+
+	modelview = mat4.identity(); 
+	
+	gl.bindTexture(gl.TEXTURE_2D, texture); 
+	gl.uniform1i(indxTexture, 0); 
+
+	gl.uniformMatrix4fv(indxProjection, false, projection); 
+	gl.uniformMatrix4fv(indxModelView, false, modelview); 
+
+	gl.drawArrays(gl.TRIANGLES, 0, entity.numVertices); 
+
+	GLT.requestGameFrame(draw); 
+}
+
+/////////////
 }());
+
 

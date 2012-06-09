@@ -22,9 +22,7 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 		}, 
 		"finished" : function(files) {
 			var mapdata = files[mapfilepath]; 
-			processLevel(mapdata, callbackprogress, function(mapdata) {
-				//TODO 
-			});  
+			processLevel(mapdata, callbackprogress, callbackfinished);  
 		}
 	}); 
 
@@ -59,13 +57,47 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 					}));
 				}
 
-				var grid = getGrid(mapdata); 
+				var map = getMapStructure(mapdata, gameobjects); 
+
+				onfinished({
+					"gameobjects" : gameobjects, 
+					"grid" : map.grid, 
+					"startpoint" : map.startpoint,
+					"program" : mainprogram 
+				});
 			}
 		});
 	}
 
-	function getGrid(mapdata) {
-		
+	function getMapStructure(mapdata, gameobjects) {
+		var grid = [[]]; 
+		var startpoint; 
+
+		for(var y = 0; y != mapdata.height; y++) {
+			grid[y] = []; 
+
+			for(var x = 0; x != mapdata.width; x++) {
+				var c = mapdata.objectmap[y][x]; 
+
+				if(c === " ") {
+					continue; 
+				}
+				else if(mapdata.mapping[c]) {
+					grid[y][x] = mapdata.mapping[c]; 
+				}
+				else if(c === "s") { 
+					startpoint = { "x" : x, "y" : y }; 
+				}
+				else {
+					grid[y][x] = null;  
+				}
+			}
+		}
+
+		return {
+			"grid" : grid, 
+			"startpoint" : startpoint
+		};
 	}
 
 	function createPropperGameObject(info) {
@@ -82,13 +114,14 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 		gl.bindTexture(gl.TEXTURE_2D, null); 
 
 		return {
-			"name"       : info.name,
-			"schema"     : info.objdata.schema, 
-			"buffer"     : vtnBuffer, 
-			"aVertex"    : aVertex, 
-			"aTextureuv" : aTextureuv, 
-			"aNormal"    : aNormal, 
-			"texture"    : texture
+			"name"        : info.name,
+			"schema"      : info.objdata.schema, 
+			"numVertices" : info.objdata.numVertices,  
+			"buffer"      : vtnBuffer, 
+			"aVertex"     : aVertex, 
+			"aTextureuv"  : aTextureuv, 
+			"aNormal"     : aNormal, 
+			"texture"     : texture
 		};
 	}
 

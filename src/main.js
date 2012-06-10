@@ -2,6 +2,7 @@
 //= game.levelmanager.js
 //= game.pathhelper.js
 //= game.idgenerator.js
+//= lib/glconstants.js
 //= lib/gl-matrix.js
 
 (function() {
@@ -46,8 +47,8 @@ function loadData(mapname) {
 }
 
 function setup(mapdata) {
-	gl.enable( gl.DEPTH_TEST ); 
-	gl.enable( gl.CULL_FACE ); 
+	gl.enable( GL_DEPTH_TEST ); 
+	gl.enable( GL_CULL_FACE ); 
 	gl.clearColor(0,0,0,1); 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
 
@@ -55,6 +56,7 @@ function setup(mapdata) {
 	recalcCamera(); 
 	
 	gameobjects = mapdata.gameobjects; 
+	var gen = new GAME.IDGENERATOR.Generator(); 
 
 	for(var y = 0; y != mapdata.grid.length; y++) {
 		var row = mapdata.grid[y]; 
@@ -66,7 +68,8 @@ function setup(mapdata) {
 					obj.entities = []; 
 				}
 
-				obj.entities.push( { "position" : {  "x" : x, "y" : y }} ); 				
+				var id = gen.next(); 
+				obj.entities.push( { "position" : {  "x" : x, "y" : y }, "id" : id } ); 				
 			}
 		}
 	}

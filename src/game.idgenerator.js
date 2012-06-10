@@ -11,7 +11,7 @@ GAME.IDGENERATOR.Generator = function() {
 		id = 0; 
 	};
 
-	this.getNew = function() {
+	this.next = function() {
 		var current = id++; 
 		return {
 			"asNumber" : function() {

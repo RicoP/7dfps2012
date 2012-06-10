@@ -4,3 +4,6 @@
 [submodule "gl-matrix"]
 	path = gl-matrix
 	url = git://github.com/toji/gl-matrix.git
+[submodule "glconstants.js"]
+	path = glconstants.js
+	url = git://github.com/RicoP/glconstants.js.git

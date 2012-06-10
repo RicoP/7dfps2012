@@ -2050,6 +2050,49 @@ GAME.PATHHELPER.toPathModel = function(name) {
 var GAME_PATHHELPER = true; 
 
 
+if(!GAME_JS) {
+
+var GAME = {}; 
+
+}
+var GAME_JS = true; 
+
+
+
+if(!GAME_IDGENERATOR) {
+(function() {
+"use strict"; 
+
+GAME.IDGENERATOR = {}; 
+GAME.IDGENERATOR.Generator = function() {
+	var id = 0; 
+	this.reset = function() {
+		id = 0; 
+	};
+
+	this.getNew = function() {
+		var current = id++; 
+		return {
+			"asNumber" : function() {
+				return current; 
+			},
+			"asColor" : function() {
+				var r,g,b; 
+				b = (current % 128) / 128; 
+				g = ((current >> 7) % 128) / 128; 
+				r = ((current >> 14) % 128) / 128; 
+
+				return [r,g,b]; 
+			}
+		};
+	};
+}
+
+}());
+}
+var GAME_IDGENERATOR = true; 
+
+
 if(!GL_MATRIX_JS) {
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations for WebGL
@@ -5517,7 +5560,6 @@ var GL_MATRIX_JS = true;
 
 (function() {
 /////////////
-
 var gl = GLT.createSafeContext(document.getElementsByTagName("canvas")[0]); 
 
 var projection = mat4.perspective(75, 4/3, 0.1, 1000); 
@@ -5527,7 +5569,7 @@ var cameraNormal = vec3.create([0,0,-1]);
 var cameraUp = vec3.create([0,1,0]); 
 var camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
 
-var entities = []; 
+var gameobjects = null; 
 
 var program = null; 
 
@@ -5565,17 +5607,20 @@ function setup(mapdata) {
 
 	cameraPos = vec3.create([mapdata.startpoint.x, 2.0, mapdata.startpoint.y]); 
 	recalcCamera(); 
+	
+	gameobjects = mapdata.gameobjects; 
 
 	for(var y = 0; y != mapdata.grid.length; y++) {
 		var row = mapdata.grid[y]; 
 		for(var x = 0; x != row.length; x++) {
 			var o = row[x]; 
-			if(o && o in mapdata.gameobjects) {
-				var gameobj = {
-					"data" : mapdata.gameobjects[o], 
-					"position" : { "x" : x, "y" : y }
-				};
-				entities.push(gameobj); 
+			if(o && o in gameobjects) {
+				var obj = gameobjects[o]; 
+				if(!obj.entities) {
+					obj.entities = []; 
+				}
+
+				obj.entities.push( { "position" : {  "x" : x, "y" : y }} ); 				
 			}
 		}
 	}
@@ -5624,41 +5669,45 @@ function draw(time) {
 	var indxProjection = gl.getUniformLocation(program, "uProjection");
 	var indxTexture    = gl.getUniformLocation(program, "uTexture"); 
 
-	for(var i = 0; i != entities.length; i++) { 
-		var entity = entities[i]; 
-		var modelview = mat4.identity(); 
-		mat4.multiply(modelview, camera); 
+	for(var name in gameobjects) {
+		var gameobject = gameobjects[name]; 
+		var entities = gameobject.entities; 
 
-		mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
-
-		if(entity.data.name === "zombie") {
-			mat4.rotateZ(modelview, Math.sin(Date.now() / 1000) / 10  );
-		}
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, entity.data.buffer); 
-
-		gl.bindTexture(gl.TEXTURE_2D, entity.data.texture);
+		gl.bindBuffer(gl.ARRAY_BUFFER, gameobject.buffer); 
+		gl.bindTexture(gl.TEXTURE_2D, gameobject.texture);
 		gl.uniform1i(indxTexture, 0); 
 
-		gl.uniformMatrix4fv(indxProjection, false, projection); 
-		gl.uniformMatrix4fv(indxModelView, false, modelview); 
+		gl.vertexAttribPointer(gameobject.aVertex, 4, gl.FLOAT, false, gameobject.stride, gameobject.voffset); 
+		gl.enableVertexAttribArray(gameobject.aVertex); 
 
-
-		gl.vertexAttribPointer(entity.data.aVertex, 4, gl.FLOAT, false, entity.data.stride, entity.data.voffset); 
-		gl.enableVertexAttribArray(entity.data.aVertex); 
-
-		if(entity.data.schema & GLT.obj.SCHEMA_VT && entity.data.aTextureuv >= 0) {
-			gl.vertexAttribPointer(entity.data.aTextureuv, 2, gl.FLOAT, false, entity.data.stride, entity.data.toffset); 
-			gl.enableVertexAttribArray(entity.data.aTextureuv); 
+		if(gameobject.schema & GLT.obj.SCHEMA_VT && gameobject.aTextureuv >= 0) {
+			gl.vertexAttribPointer(gameobject.aTextureuv, 2, gl.FLOAT, false, gameobject.stride, gameobject.toffset); 
+			gl.enableVertexAttribArray(gameobject.aTextureuv); 
 		}
 
-		if(entity.data.schema & GLT.obj.SCHEMA_VN && entity.data.aNormal >= 0) {
-			gl.vertexAttribPointer(entity.data.aNormal, 4, gl.FLOAT, false, entity.data.stride, entity.data.noffset); 
-			gl.enableVertexAttribArray(entity.data.aNormal); 
+		if(gameobject.schema & GLT.obj.SCHEMA_VN && gameobject.aNormal >= 0) {
+			gl.vertexAttribPointer(gameobject.aNormal, 4, gl.FLOAT, false, gameobject.stride, gameobject.noffset); 
+			gl.enableVertexAttribArray(gameobject.aNormal); 
 		}
-		
-		gl.drawArrays(gl.TRIANGLES, 0, entity.data.numVertices); 
+
+		for(var i = 0; i != entities.length; i++) { 
+			var entity = entities[i]; 
+			var modelview = mat4.identity(); 
+			mat4.multiply(modelview, camera); 
+
+			mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
+
+			if(name === "zombie") {
+				mat4.rotateZ(modelview, Math.sin(Date.now() / 1000) / 10  );
+			}
+
+			gl.uniformMatrix4fv(indxProjection, false, projection); 
+			gl.uniformMatrix4fv(indxModelView, false, modelview); 
+			
+			gl.drawArrays(gl.TRIANGLES, 0, gameobject.numVertices); 
+		}
 	}
+
 
 	GLT.requestGameFrame(draw); 
 }

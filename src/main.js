@@ -13,6 +13,7 @@ var gl = GLT.createSafeContext(canvas);
 
 var mousepos = {x:0,y:0}; 
 var mousewasmoved = false; 
+var pickBufferSize = 256; 
 
 var pickedId = -1; 
 
@@ -20,8 +21,7 @@ canvas.onmousedown = function(e) {
 	var x = e.pageX - this.offsetLeft;
 	var y = canvas.height - e.pageY - this.offsetTop;
 	mousewasmoved = true; 
-	mousepos = { "x" : x, "y" : y }; 
-	
+	mousepos = { "x" : x, "y" : y }; 	
 };
 
 var projection = mat4.perspective(75, 4/3, 0.1, 1000); 

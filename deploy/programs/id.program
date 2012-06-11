@@ -6,14 +6,14 @@ uniform mat4 uModelview;
 uniform mat4 uProjection; 
 uniform vec3 uIdColor; 
 
-varying vec4 vIdColor; 
+varying vec3 vIdColor; 
 
 #ifdef VERTEX
 attribute vec4 aVertex;   
 
 void main(void) {
 	gl_Position = uProjection * uModelview * aVertex; 
-	vIdColor = uIdColor; 
+	vIdColor = uIdColor.xyz; 
 }
 #endif 
 
@@ -21,6 +21,6 @@ void main(void) {
 
 #ifdef FRAGMENT 
 void main(void) {	
-	gl_FragColor = vIdColor; 
+	gl_FragColor = vec4(vIdColor, 1.0); 
 }
 #endif

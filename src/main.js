@@ -1,3 +1,4 @@
+(function() {
 //= game.js 
 //= game.levelmanager.js
 //= game.pathhelper.js
@@ -7,7 +8,19 @@
 
 (function() {
 /////////////
-var gl = GLT.createSafeContext(document.getElementsByTagName("canvas")[0]); 
+var canvas = document.getElementsByTagName("canvas")[0];
+var gl = GLT.createSafeContext(canvas); 
+
+var mousepos = {x:0,y:0}; 
+var mousewasmoved = false; 
+
+canvas.onmousemove = function(e) {
+	var x = e.pageX - this.offsetLeft;
+	var y = canvas.height - e.pageY - this.offsetTop;
+	mousewasmoved = true; 
+	mousepos = { "x" : x, "y" : y }; 
+	
+};
 
 var projection = mat4.perspective(75, 4/3, 0.1, 1000); 
 var cameraPos = vec3.create([0, 0, 0]); 
@@ -18,7 +31,10 @@ var camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir)
 
 var gameobjects = null; 
 
-var program = null; 
+var colorprogram = null; 
+var idprogram = null; 
+
+var render = true; 
 
 loadData("map1"); 
 
@@ -50,11 +66,10 @@ function setup(mapdata) {
 	gl.enable( GL_DEPTH_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
 	gl.clearColor(0,0,0,1); 
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
 
 	cameraPos = vec3.create([mapdata.startpoint.x, 2.0, mapdata.startpoint.y]); 
 	recalcCamera(); 
-	
+
 	gameobjects = mapdata.gameobjects; 
 	var gen = new GAME.IDGENERATOR.Generator(); 
 
@@ -74,14 +89,42 @@ function setup(mapdata) {
 		}
 	}
 
-	program = mapdata.program; 
-	gl.useProgram(mapdata.program); 
+	colorprogram = mapdata.program; 
+	idprogram = mapdata.idprogram; 
 }
 
 function draw(time) {
-	var moved = false; 
+	update(time); 
 
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+	if(render) {
+
+		if(mousewasmoved) { 
+			mousewasmoved = false; 
+
+			//Draw Picker Buffer 
+			//gl.bindFramebuffer(GL_FRAMEBUFFER, pickerFrameBuffer);
+			gl.useProgram(idprogram); 
+			gl.clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+			drawobjects(time, idprogram); 
+
+			var buf = new Uint8Array(4); 
+			gl.readPixels(mousepos.x, mousepos.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf); 
+			console.log(buf[0], buf[1], buf[2], buf[3]); 
+		}
+		
+		//Draw Render Buffer 
+		gl.bindFramebuffer(GL_FRAMEBUFFER, null);
+		gl.useProgram(colorprogram); 
+		//gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+		drawobjects(time, colorprogram); 
+
+		}
+
+	GLT.requestGameFrame(draw); 
+}
+
+function update(time) {
+	var moved = false; 
 
 	if(GLT.keys.isDown(GLT.keys.codes.w)) {
 		cameraPos[2] -= 0.1; 
@@ -114,9 +157,23 @@ function draw(time) {
 		recalcCamera(); 
 	}
 
+	if(GLT.keys.isDown(GLT.keys.codes.p)) {
+		render = !render; 
+	}
+}
+
+function drawobjects(time, program) {
+	if(gl.checkFramebufferStatus(GL_FRAMEBUFFER) !== GL_FRAMEBUFFER_COMPLETE ) { 
+		console.log("incomplete");
+		return; 
+	}
+
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+	
 	var indxModelView  = gl.getUniformLocation(program, "uModelview") 
 	var indxProjection = gl.getUniformLocation(program, "uProjection");
 	var indxTexture    = gl.getUniformLocation(program, "uTexture"); 
+	var indxId         = gl.getUniformLocation(program, "uIdColor"); 
 
 	for(var name in gameobjects) {
 		var gameobject = gameobjects[name]; 
@@ -124,7 +181,9 @@ function draw(time) {
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, gameobject.buffer); 
 		gl.bindTexture(gl.TEXTURE_2D, gameobject.texture);
-		gl.uniform1i(indxTexture, 0); 
+		if(indxTexture) { 
+			gl.uniform1i(indxTexture, 0); 
+		}
 
 		gl.vertexAttribPointer(gameobject.aVertex, 4, gl.FLOAT, false, gameobject.stride, gameobject.voffset); 
 		gl.enableVertexAttribArray(gameobject.aVertex); 
@@ -152,15 +211,18 @@ function draw(time) {
 
 			gl.uniformMatrix4fv(indxProjection, false, projection); 
 			gl.uniformMatrix4fv(indxModelView, false, modelview); 
-			
-			gl.drawArrays(gl.TRIANGLES, 0, gameobject.numVertices); 
+
+			if(indxId) {
+				gl.uniform3fv(indxId, entity.id.asColor()); 
+			}
+
+			gl.drawArrays(gl.TRIANGLES, 0, gameobject.numVertices);
 		}
 	}
 
 
-	GLT.requestGameFrame(draw); 
 }
 
 /////////////
 }());
-
+}()); 

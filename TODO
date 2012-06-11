@@ -6,10 +6,12 @@ Day 1:
 
 Day 2: 
 * Optimize rendering loop [x]
+
+Day 3: 
 * Create render color shader with id [ ] 
 * Create ID to Color Function [ ] 
 
-Day 3: 
+Day 4: 
 * Optimize size of Models [ ] 
 * Create better Level [ ] 
 * Implement shooting [ ] 

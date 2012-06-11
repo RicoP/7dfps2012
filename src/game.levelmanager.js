@@ -11,6 +11,7 @@ GAME.LEVELMANAGER = {};
 GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinished) {
 	var mapfilepath = "maps/" + name + ".json"; 
 	var mainprogram = null; 
+	var idprogram = null; 
 	var aVertex = -1; 
 	var aTextureuv = -1; 
 	var aNormal = -1; 
@@ -37,6 +38,7 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 				var files = mapNameToKey(filesWithNames, gl); 				
 
 				mainprogram = GLT.SHADER.compileProgram( gl, files[mapdata.programname].data );
+				idprogram   = GLT.SHADER.compileProgram( gl, files[mapdata.idprogramname].data );
 				aVertex     = gl.getAttribLocation(mainprogram, "aVertex"); 
 				aTextureuv  = gl.getAttribLocation(mainprogram, "aTextureuv"); 
 				aNormal     = gl.getAttribLocation(mainprogram, "aNormal"); 
@@ -63,7 +65,8 @@ GAME.LEVELMANAGER.loadlevel = function(name, gl, callbackprogress, callbackfinis
 					"gameobjects" : gameobjects, 
 					"grid" : map.grid, 
 					"startpoint" : map.startpoint,
-					"program" : mainprogram 
+					"program" : mainprogram,
+					"idprogram" : idprogram
 				});
 			}
 		});

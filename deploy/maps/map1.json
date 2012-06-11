@@ -5,13 +5,15 @@
 		{ "file" : "models/wall.obj",          "name" : "wallobj" },
 		{ "file" : "models/walltex.png",       "name" : "walltex" },
 		{ "file" : "models/groundtex.png",     "name" : "groundtex" },
-		{ "file" : "programs/diffuse.program", "name" : "diffuse", "type" : "program" }
+		{ "file" : "programs/diffuse.program", "name" : "diffuse", "type" : "program" },
+		{ "file" : "programs/id.program",      "name" : "id",      "type" : "program" }
 	],
 
 	"width" : 8, 
 	"height" : 8, 
 
 	"programname" : "diffuse", 
+	"idprogramname" : "id", 
 
 	"objects" : {
 		"models" : [

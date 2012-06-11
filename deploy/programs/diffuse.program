@@ -2,12 +2,12 @@
 precision highp float;
 #endif
 
-varying vec2 vTextureuv; 
-varying vec4 vNormal; 
-
 uniform mat4 uModelview;
 uniform mat4 uProjection; 
 uniform sampler2D uTexture; 
+
+varying vec2 vTextureuv; 
+varying vec4 vNormal; 
 
 #ifdef VERTEX
 attribute vec4 aVertex;   

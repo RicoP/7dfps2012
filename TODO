@@ -8,8 +8,9 @@ Day 2:
 * Optimize rendering loop [x]
 
 Day 3: 
-* Create render color shader with id [ ] 
-* Create ID to Color Function [ ] 
+* Create render color shader with id [x] 
+* Create ID to Color Function [x] 
+* Map picked color to ID and object [ ]
 
 Day 4: 
 * Optimize size of Models [ ] 

@@ -5,9 +5,7 @@ precision highp float;
 uniform mat4 uModelview;
 uniform mat4 uProjection; 
 uniform sampler2D uTexture; 
-
-uniform int uId;
-uniform int uPickedId; 
+uniform bool uHighlight;  
 
 varying vec2 vTextureuv; 
 varying vec4 vNormal; 
@@ -28,7 +26,7 @@ void main(void) {
 
 #ifdef FRAGMENT 
 void main(void) {	
-	if(uId == uPickedId) {
+	if(uHighlight) {
 		gl_FragColor = texture2D(uTexture, vTextureuv) + vec4(0.3, 0.3, 0.3, 0.0);
 	}
 	else { 

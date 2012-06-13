@@ -7,15 +7,15 @@
 //= lib/gl-matrix.js
 
 (function() {
+"use strict"; 
 /////////////
 var canvas = document.getElementsByTagName("canvas")[0];
 var gl = GLT.createSafeContext(canvas); 
 
 var mousepos = {x:0,y:0}; 
 var mousewasmoved = false; 
-var pickBufferSize = 256; 
 
-var pickedId = -1; 
+var pickedId = 0; 
 
 canvas.onmousedown = function(e) {
 	var x = e.pageX - this.offsetLeft;
@@ -32,6 +32,7 @@ var cameraUp = vec3.create([0,1,0]);
 var camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir), cameraUp); 
 
 var gameobjects = null; 
+var weapon = null; 
 
 var colorprogram = null; 
 var idprogram = null; 
@@ -69,7 +70,7 @@ function setup(mapdata) {
 	gl.enable( GL_CULL_FACE ); 
 	gl.clearColor(0,0,0,1); 
 
-	cameraPos = vec3.create([mapdata.startpoint.x, 2.0, mapdata.startpoint.y]); 
+	cameraPos = vec3.create([mapdata.startpoint.x, 3.0, mapdata.startpoint.y]); 
 	recalcCamera(); 
 
 	gameobjects = mapdata.gameobjects; 
@@ -86,26 +87,25 @@ function setup(mapdata) {
 				}
 
 				var id = gen.next(); 
-				obj.entities.push( { "position" : {  "x" : x, "y" : y }, "id" : id } ); 				
+				obj.entities.push( { "position" : {  "x" : x, "y" : y }, "id" : id } ); 
 			}
 		}
 	}
 
+	weapon = mapdata.weapon; 
 	colorprogram = mapdata.program; 
 	idprogram = mapdata.idprogram; 
 }
 
 function draw(time) {
 	update(time); 
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
 
 	if(render) {
-
 		if(mousewasmoved) { 
 			mousewasmoved = false; 
 
 			//Draw Picker Buffer 
-			gl.useProgram(idprogram); 
-			gl.clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 			drawobjects(time, idprogram); 
 
 			var buf = new Uint8Array(4); 
@@ -117,18 +117,18 @@ function draw(time) {
 			g = buf[1]; 
 			b = buf[2]; 
 
-			pickedId = GAME.IDGENERATOR.Id.fromColor(r,g,b).asNumber();
+			pickedId = new GAME.IDGENERATOR.Id.fromColor(r,g,b).asNumber(); 
 
-			console.log(buf[0], buf[1], buf[2], buf[3]); 
+			console.log(r,g,b); 
+			gl.clear(gl.DEPTH_BUFFER_BIT); 
 		}
 		
 		//Draw Render Buffer 
-		gl.bindFramebuffer(GL_FRAMEBUFFER, null);
-		gl.useProgram(colorprogram); 
-		//gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
 		drawobjects(time, colorprogram); 
+	}
 
-		}
+	gl.clear(gl.DEPTH_BUFFER_BIT); 
+	drawWeapon(); 
 
 	GLT.requestGameFrame(draw); 
 }
@@ -173,19 +173,15 @@ function update(time) {
 }
 
 function drawobjects(time, program) {
-	if(gl.checkFramebufferStatus(GL_FRAMEBUFFER) !== GL_FRAMEBUFFER_COMPLETE ) { 
-		console.log("incomplete");
-		return; 
-	}
+	gl.useProgram(program); 
 
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
-	
 	var uModelView  = gl.getUniformLocation(program, "uModelview") 
 	var uProjection = gl.getUniformLocation(program, "uProjection");
 	var uTexture    = gl.getUniformLocation(program, "uTexture"); 
 	var uIdColor    = gl.getUniformLocation(program, "uIdColor"); 
-	var uId         = gl.getUniformLocation(program, "uId"); 
-	var uPickedId   = gl.getUniformLocation(program, "uPickedId"); 
+	var uHighlight  = gl.getUniformLocation(program, "uHighlight"); 
+			
+	var modelview = mat4.identity(); 
 
 	for(var name in gameobjects) {
 		var gameobject = gameobjects[name]; 
@@ -212,35 +208,74 @@ function drawobjects(time, program) {
 
 		for(var i = 0; i != entities.length; i++) { 
 			var entity = entities[i]; 
-			var modelview = mat4.identity(); 
+			mat4.identity(modelview); 
 			mat4.multiply(modelview, camera); 
 
 			mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
 
 			if(name === "zombie") {
-				mat4.rotateZ(modelview, Math.sin(Date.now() / 1000) / 10  );
+				mat4.rotateZ(modelview, Math.sin(entity.id.asNumber() * 127 + Date.now() / 1000) / 10  );
 			}
 
 			gl.uniformMatrix4fv(uProjection, false, projection); 
 			gl.uniformMatrix4fv(uModelView, false, modelview); 
 
-			if(uId) {
-				gl.uniform1i(uId, entity.id.asNumber()); 
-			}
-
-			if(uPickedId) {
-				gl.uniform1i(uPickedId, pickedId); 
-			}
-
 			if(uIdColor) {
 				gl.uniform3fv(uIdColor, entity.id.asColor()); 
+			}
+
+			if(uHighlight) {
+				if(pickedId === entity.id.asNumber()) { 
+					gl.uniform1i(uHighlight, 1);  
+				}
+				else {
+					gl.uniform1i(uHighlight, 0);  
+				}
 			}
 
 			gl.drawArrays(gl.TRIANGLES, 0, gameobject.numVertices);
 		}
 	}
+}
 
+function drawWeapon() {
+	gl.useProgram(colorprogram); 	
 
+	var uModelView  = gl.getUniformLocation(colorprogram, "uModelview") 
+	var uProjection = gl.getUniformLocation(colorprogram, "uProjection");
+	var uTexture    = gl.getUniformLocation(colorprogram, "uTexture"); 
+	var uHighlight  = gl.getUniformLocation(colorprogram, "uHighlight"); 
+
+	var gameobject = weapon; 
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, gameobject.buffer); 
+	gl.bindTexture(gl.TEXTURE_2D, gameobject.texture);
+	
+	gl.uniform1i(uTexture, 0); 
+	gl.uniform1i(uHighlight, 0); 
+
+	gl.vertexAttribPointer(gameobject.aVertex, 4, gl.FLOAT, false, gameobject.stride, gameobject.voffset); 
+	gl.enableVertexAttribArray(gameobject.aVertex); 
+
+	if(gameobject.schema & GLT.obj.SCHEMA_VT && gameobject.aTextureuv >= 0) {
+		gl.vertexAttribPointer(gameobject.aTextureuv, 2, gl.FLOAT, false, gameobject.stride, gameobject.toffset); 
+		gl.enableVertexAttribArray(gameobject.aTextureuv); 
+	}
+
+	if(gameobject.schema & GLT.obj.SCHEMA_VN && gameobject.aNormal >= 0) {
+		gl.vertexAttribPointer(gameobject.aNormal, 4, gl.FLOAT, false, gameobject.stride, gameobject.noffset); 
+		gl.enableVertexAttribArray(gameobject.aNormal); 
+	}
+
+	var modelview = mat4.identity(); 
+	//mat4.multiply(modelview, camera); 
+	mat4.translate(modelview, [0.7,-1.4,-0.7]); 
+	mat4.rotateY(modelview, Math.PI / 2);
+
+	gl.uniformMatrix4fv(uProjection, false, projection); 
+	gl.uniformMatrix4fv(uModelView, false, modelview); 
+
+	gl.drawArrays(gl.TRIANGLES, 0, gameobject.numVertices);
 }
 
 /////////////

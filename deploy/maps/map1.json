@@ -1,7 +1,9 @@
 {
 	"files" : [
 		{ "file" : "models/zombie.obj",        "name" : "zombieobj" },
-		{ "file" : "models/zombietex.png",     "name" : "zombietex" },
+		{ "file" : "models/zombietex.png",     "name" : "zombietex", "filter" : "nearest" },
+		{ "file" : "models/ak47.obj",          "name" : "ak47obj" },
+		{ "file" : "models/ak47.png",          "name" : "ak47tex" },
 		{ "file" : "models/wall.obj",          "name" : "wallobj" },
 		{ "file" : "models/walltex.png",       "name" : "walltex" },
 		{ "file" : "models/groundtex.png",     "name" : "groundtex" },
@@ -14,6 +16,9 @@
 
 	"programname" : "diffuse", 
 	"idprogramname" : "id", 
+
+	"weaponmodel" : "ak47obj", 
+	"weapontexture" : "ak47tex", 
 
 	"objects" : {
 		"models" : [

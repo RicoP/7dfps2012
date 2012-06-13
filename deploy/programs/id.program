@@ -12,7 +12,7 @@ varying vec3 vIdColor;
 attribute vec4 aVertex;   
 
 void main(void) {
-	gl_Position = uProjection * uModelview * aVertex; 
+	gl_Position = uModelview * aVertex; 
 	vIdColor = uIdColor.xyz; 
 }
 #endif 

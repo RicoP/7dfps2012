@@ -5899,7 +5899,13 @@ var GL_MATRIX_JS = true;
 "use strict"; 
 /////////////
 var canvas = document.getElementsByTagName("canvas")[0];
-var gl = GLT.createSafeContext(canvas); 
+var gl = null; 
+
+if(DEBUG) { 
+	gl = GLT.createSafeContext(canvas); 
+} else {
+	gl = GLT.createContext(canvas); 
+}
 
 var mousepos = {x:0,y:0}; 
 var mousewasmoved = false; 
@@ -5913,7 +5919,7 @@ canvas.onmousedown = function(e) {
 	mousepos = { "x" : x, "y" : y }; 	
 };
 
-var projection = mat4.perspective(75, 4/3, 0.1, 1000); 
+var projection = mat4.perspective(60, 4/3, 0.1, 1000); 
 var cameraPos = vec3.create([0, 0, 0]); 
 var cameraDir = vec3.create([0,0,0]); 
 var cameraNormal = vec3.create([0,0,-1]); 
@@ -6065,12 +6071,11 @@ function drawobjects(time, program) {
 	gl.useProgram(program); 
 
 	var uModelView  = gl.getUniformLocation(program, "uModelview") 
-	var uProjection = gl.getUniformLocation(program, "uProjection");
 	var uTexture    = gl.getUniformLocation(program, "uTexture"); 
 	var uIdColor    = gl.getUniformLocation(program, "uIdColor"); 
 	var uHighlight  = gl.getUniformLocation(program, "uHighlight"); 
 			
-	var modelview = mat4.identity(); 
+	var modelview = mat4.create(); 
 
 	for(var name in gameobjects) {
 		var gameobject = gameobjects[name]; 
@@ -6097,8 +6102,9 @@ function drawobjects(time, program) {
 
 		for(var i = 0; i != entities.length; i++) { 
 			var entity = entities[i]; 
-			mat4.identity(modelview); 
-			mat4.multiply(modelview, camera); 
+			//mat4.identity(modelview); 
+			mat4.multiply(projection, camera, modelview); 
+			//mat4.multiply(modelview, camera); 
 
 			mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
 
@@ -6106,7 +6112,6 @@ function drawobjects(time, program) {
 				mat4.rotateZ(modelview, Math.sin(entity.id.asNumber() * 127 + Date.now() / 1000) / 10  );
 			}
 
-			gl.uniformMatrix4fv(uProjection, false, projection); 
 			gl.uniformMatrix4fv(uModelView, false, modelview); 
 
 			if(uIdColor) {
@@ -6131,7 +6136,6 @@ function drawWeapon() {
 	gl.useProgram(colorprogram); 	
 
 	var uModelView  = gl.getUniformLocation(colorprogram, "uModelview") 
-	var uProjection = gl.getUniformLocation(colorprogram, "uProjection");
 	var uTexture    = gl.getUniformLocation(colorprogram, "uTexture"); 
 	var uHighlight  = gl.getUniformLocation(colorprogram, "uHighlight"); 
 
@@ -6156,12 +6160,12 @@ function drawWeapon() {
 		gl.enableVertexAttribArray(gameobject.aNormal); 
 	}
 
-	var modelview = mat4.identity(); 
-	//mat4.multiply(modelview, camera); 
-	mat4.translate(modelview, [0.7,-1.4,-0.7]); 
+	var modelview = mat4.create();  
+	mat4.set(projection, modelview); 
+	mat4.translate(modelview, [0.9,-1.6,-0.4]); 
+
 	mat4.rotateY(modelview, Math.PI / 2);
 
-	gl.uniformMatrix4fv(uProjection, false, projection); 
 	gl.uniformMatrix4fv(uModelView, false, modelview); 
 
 	gl.drawArrays(gl.TRIANGLES, 0, gameobject.numVertices);

@@ -13,12 +13,10 @@ varying vec4 vNormal;
 #ifdef VERTEX
 attribute vec4 aVertex;   
 attribute vec2 aTextureuv;   
-attribute vec4 aNormal;
 
 void main(void) {
 	vTextureuv = aTextureuv; 
-	vNormal = uProjection * uModelview * aNormal;
-	gl_Position = uProjection * uModelview * aVertex; 
+	gl_Position = uModelview * aVertex; 
 }
 #endif 
 

@@ -6,6 +6,7 @@ uniform mat4 uModelview;
 uniform mat4 uProjection; 
 uniform sampler2D uTexture; 
 uniform bool uHighlight;  
+uniform float uDamage; 
 
 varying vec2 vTextureuv; 
 varying vec4 vNormal; 
@@ -23,12 +24,76 @@ void main(void) {
 
 
 #ifdef FRAGMENT 
+vec3 getDamageColor(vec2 texCoord);
+vec3 rgbToHsv(vec3 rgb);
+vec3 hsvToRgb(vec3 hsv);
+vec3 getDamageColor(vec2 texCoord);
+
 void main(void) {	
+	vec3 color = getDamageColor(vTextureuv); 
 	if(uHighlight) {
-		gl_FragColor = texture2D(uTexture, vTextureuv) + vec4(0.3, 0.3, 0.3, 0.0);
+		gl_FragColor = vec4(color, 1.0) + vec4(0.3, 0.3, 0.3, 0.0);
 	}
 	else { 
-		gl_FragColor = texture2D(uTexture, vTextureuv);
+		gl_FragColor = vec4(color, 1.0); 
 	}
+}
+
+vec3 getDamageColor(vec2 texCoord) {
+	vec3 color = texture2D(uTexture, texCoord).xyz;
+
+	if(uDamage == 1.0 || uDamage == 0.0) {
+		return color; 
+	}
+
+	vec3 hsv = rgbToHsv(color); 
+	hsv.z *= uDamage; 
+	return hsvToRgb(hsv); 
+}
+
+vec3 rgbToHsv(vec3 rgb) {
+	float M = max(rgb.r, max(rgb.g, rgb.b)); 
+	float m = min(rgb.r, min(rgb.g, rgb.b)); 
+	float r = (M - rgb.r) / (M - m); 
+	float g = (M - rgb.g) / (M - m); 
+	float b = (M - rgb.b) / (M - m); 
+	float V = M; 
+	if(M == 0.0) return vec3(180.0, 0.0, 0.0); 
+
+	float S = (M - m) / M; 
+
+	float H; 
+	if(rgb.r == M) {
+		H = 60.0 * (rgb.b - rgb.g); 
+	}
+	else if(rgb.g == M) {
+		H = 60.0 * (2.0 + rgb.r - rgb.b);  
+	}
+	else {
+		H = 60.0 * (4.0 + rgb.g - rgb.r);  
+	}
+
+	if(H >= 360.0) H = H - 360.0; 
+	if(H <= 0.0) H = H + 360.0; 
+
+	return vec3(H,S,V);
+}
+
+vec3 hsvToRgb(vec3 hsv) {
+	float H = hsv.x; 
+	float S = hsv.y; 
+	float V = hsv.z; 
+
+	float C = V * S; 
+	float h = H / 60.0; 
+	float X = C * ( 1.0 - abs( mod(h, 2.0) - 1.0 ) ); 
+
+	if(h < 1.0) return vec3(C, X, 0.0); 
+	if(h < 2.0) return vec3(X, C, 0.0); 
+	if(h < 3.0) return vec3(0.0, C, X); 
+	if(h < 4.0) return vec3(0.0, X, C); 
+	if(h < 5.0) return vec3(X, 0.0, C); 
+	
+	return vec3(C, 0.0, X); 
 }
 #endif

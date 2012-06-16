@@ -4,15 +4,18 @@
 		{ "file" : "models/zombietex.png",     "name" : "zombietex", "filter" : "nearest" },
 		{ "file" : "models/ak47.obj",          "name" : "ak47obj" },
 		{ "file" : "models/ak47.png",          "name" : "ak47tex" },
-		{ "file" : "models/wall.obj",          "name" : "wallobj" },
+		{ "file" : "models/wallN.obj",         "name" : "wallnobj" },
+		{ "file" : "models/wallW.obj",         "name" : "wallwobj" },
+		{ "file" : "models/wallE.obj",         "name" : "walleobj" },
+		{ "file" : "models/wallS.obj",         "name" : "wallsobj" },
 		{ "file" : "models/walltex.png",       "name" : "walltex" },
 		{ "file" : "models/groundtex.png",     "name" : "groundtex" },
 		{ "file" : "programs/diffuse.program", "name" : "diffuse", "type" : "program" },
 		{ "file" : "programs/id.program",      "name" : "id",      "type" : "program" }
 	],
 
-	"width" : 8, 
-	"height" : 8, 
+	"width" : 20, 
+	"height" : 20, 
 
 	"programname" : "diffuse", 
 	"idprogramname" : "id", 
@@ -23,25 +26,43 @@
 	"objects" : {
 		"models" : [
 			{ "name" : "zombie", "model" : "zombieobj", "texture" : "zombietex" },
-			{ "name" : "wall", "model" : "wallobj", "texture" : "walltex" }
+			{ "name" : "walln", "model" : "wallnobj", "texture" : "walltex" },
+			{ "name" : "walle", "model" : "walleobj", "texture" : "walltex" },
+			{ "name" : "wallw", "model" : "wallwobj", "texture" : "walltex" },
+			{ "name" : "walls", "model" : "wallsobj", "texture" : "walltex" }
 		],
 
 		"ground" : { "texture" : "groundtex" }
 	},
 
 	"objectmap" : [
-		" z  z z ",
-		"        ",
-		"wwwwwwww",
-		"   s    ",
-		"        ",
-		"        ",
-		"        ",
-		"        "
+		"   z    z    z   z  ", 
+		"                    ", 
+		"                    ", 
+		" qqqqqqqqqqqqqqqqqq ", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e         s        w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		"e                  w", 
+		" nnnnnnnnnnnnnnnnnn " 
 	],
 
 	"mapping" : {
 		"z" : "zombie", 
-		"w" : "wall" 
+		"w" : "wallw", 
+		"n" : "walln",
+		"q" : "walls", 
+		"e" : "walle" 
 	}
 }

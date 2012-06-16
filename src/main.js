@@ -22,6 +22,7 @@ var mousepos = {x:0,y:0};
 var mousewasmoved = false; 
 
 var pickedId = 0; 
+var modelview = mat4.create(); 
 
 canvas.onmousedown = function(e) {
 	var x = e.pageX - this.offsetLeft;
@@ -92,8 +93,12 @@ function setup(mapdata) {
 					obj.entities = []; 
 				}
 
-				var id = gen.next(); 
-				obj.entities.push( { "position" : {  "x" : x, "y" : y }, "id" : id } ); 
+				var entity = { "position" : {  "x" : x, "y" : y }};  
+				if(o === "zombie") {
+					entity.id = gen.next(); 
+				}
+
+				obj.entities.push( entity ); 
 			}
 		}
 	}
@@ -185,9 +190,8 @@ function drawobjects(time, program) {
 	var uTexture    = gl.getUniformLocation(program, "uTexture"); 
 	var uIdColor    = gl.getUniformLocation(program, "uIdColor"); 
 	var uHighlight  = gl.getUniformLocation(program, "uHighlight"); 
+	var uDamage     = gl.getUniformLocation(program, "uDamage");    
 			
-	var modelview = mat4.create(); 
-
 	for(var name in gameobjects) {
 		var gameobject = gameobjects[name]; 
 		var entities = gameobject.entities; 
@@ -210,27 +214,35 @@ function drawobjects(time, program) {
 			gl.vertexAttribPointer(gameobject.aNormal, 4, gl.FLOAT, false, gameobject.stride, gameobject.noffset); 
 			gl.enableVertexAttribArray(gameobject.aNormal); 
 		}
+			
+		var isZombie = name === "zombie"; 
 
 		for(var i = 0; i != entities.length; i++) { 
 			var entity = entities[i]; 
-			//mat4.identity(modelview); 
 			mat4.multiply(projection, camera, modelview); 
-			//mat4.multiply(modelview, camera); 
 
 			mat4.translate(modelview, [entity.position.x, 0, entity.position.y]); 
 
-			if(name === "zombie") {
+			if(isZombie) {
 				mat4.rotateZ(modelview, Math.sin(entity.id.asNumber() * 127 + Date.now() / 1000) / 10  );
 			}
 
 			gl.uniformMatrix4fv(uModelView, false, modelview); 
 
 			if(uIdColor) {
-				gl.uniform3fv(uIdColor, entity.id.asColor()); 
+				if(isZombie) { 
+					gl.uniform3fv(uIdColor, entity.id.asColor()); 
+				} else {
+					gl.uniform3fv(uIdColor, [0,0,0]); 	
+				}
+			}
+				
+			if(uDamage) {
+				//gl.uniform1f(uDamage, 0.5); 
 			}
 
 			if(uHighlight) {
-				if(pickedId === entity.id.asNumber()) { 
+				if(isZombie && pickedId === entity.id.asNumber()) { 
 					gl.uniform1i(uHighlight, 1);  
 				}
 				else {
@@ -271,10 +283,8 @@ function drawWeapon() {
 		gl.enableVertexAttribArray(gameobject.aNormal); 
 	}
 
-	var modelview = mat4.create();  
 	mat4.set(projection, modelview); 
 	mat4.translate(modelview, [0.9,-1.6,-0.4]); 
-
 	mat4.rotateY(modelview, Math.PI / 2);
 
 	gl.uniformMatrix4fv(uModelView, false, modelview); 
